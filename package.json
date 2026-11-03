@@ -1,0 +1,14 @@
+{
+  "name": "platform-gateway",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check": "node scripts/generate.mjs --check",
+    "registry:token": "sh scripts/registry-token.sh"
+  },
+  "dependencies": {
+    "yaml": "2.9.1"
+  }
+}

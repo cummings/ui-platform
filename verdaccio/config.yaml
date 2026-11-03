@@ -1,0 +1,25 @@
+# Local stand-in for the company's private npm registry (Artifactory / GitHub Packages / CodeArtifact).
+storage: /verdaccio/storage/data
+plugins: /verdaccio/plugins
+
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    max_users: 100
+
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+
+packages:
+  # Platform packages: never proxied to the public registry (prevents dependency confusion).
+  "@core/*":
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+  "**":
+    access: $all
+    proxy: npmjs
+
+listen: 0.0.0.0:4873
+log: { type: stdout, format: pretty, level: warn }

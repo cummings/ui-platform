@@ -1,0 +1,38 @@
+# Platform route registry — the contract between product teams and the edge router.
+#
+# Teams onboard (or change their routes) by PR to this file; the platform team reviews it.
+# `pnpm generate` turns it into the Nginx config and the runtime app registry
+# (public/apps.json → served at /platform/apps.json and read by every app's launcher).
+#
+#   basePath  Where the web app is mounted. The app must serve under it (Next.js basePath) —
+#             the gateway never rewrites paths.
+#   web/api   Upstream service. `service:port` inside the platform network; `devPort` is the
+#             port the app listens on when run on a laptop (UPSTREAMS=dev).
+
+apps:
+  - id: home
+    title: Home
+    description: Platform landing page and sign-in
+    team: Platform
+    icon: "🏠"
+    basePath: /
+    extraPaths: [/auth]
+    web: { service: home, port: 3000, devPort: 3000 }
+
+  - id: orders
+    title: Orders
+    description: Create, track and fulfil customer orders
+    team: Team Orders
+    icon: "📦"
+    basePath: /orders
+    web: { service: orders-web, port: 3000, devPort: 3101 }
+    api: { path: /api/orders, service: orders-api, port: 4000, devPort: 4101 }
+
+  - id: analytics
+    title: Analytics
+    description: Revenue and order insights across the business
+    team: Team Analytics
+    icon: "📈"
+    basePath: /analytics
+    web: { service: analytics-web, port: 3000, devPort: 3102 }
+    api: { path: /api/analytics, service: analytics-api, port: 4000, devPort: 4102 }
