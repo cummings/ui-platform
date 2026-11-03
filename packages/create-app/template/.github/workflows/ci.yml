@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+env:
+  CORE_REGISTRY: ${{ vars.CORE_REGISTRY }}          # e.g. https://npm.company.com
+  IMAGE_REGISTRY: ${{ vars.IMAGE_REGISTRY }}        # e.g. registry.company.com/team-__APP_ID__
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: |
+          sed -i "s#^@core:registry=.*#@core:registry=${CORE_REGISTRY}/#" .npmrc
+          echo "//${CORE_REGISTRY#*://}/:_authToken=${{ secrets.CORE_REGISTRY_TOKEN }}" >> .npmrc
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+
+  image:
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { service: [web, api] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_REGISTRY }}/${{ matrix.service }}:${{ github.sha }}
+          build-args: CORE_REGISTRY=${{ env.CORE_REGISTRY }}
+          secrets: core_registry_token=${{ secrets.CORE_REGISTRY_TOKEN }}
+      # Deployment (Helm/Argo/etc.) picks up the new tag; the gateway route is unchanged.

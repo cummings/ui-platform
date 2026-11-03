@@ -1,0 +1,38 @@
+{
+  "name": "@core/sdk",
+  "version": "0.2.0",
+  "description": "Platform context, hooks, typed API client and cross-app events",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.105.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@core/config": "workspace:*",
+    "@types/react": "19.3.0",
+    "react": "19.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  }
+}

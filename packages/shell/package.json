@@ -1,0 +1,44 @@
+{
+  "name": "@core/shell",
+  "version": "0.1.1",
+  "description": "Platform chrome: top bar, app launcher, navigation, user menu",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup && cp src/styles.css dist/styles.css",
+    "dev": "tsup --watch --onSuccess \"cp src/styles.css dist/styles.css\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@core/sdk": "workspace:^",
+    "@core/ui": "workspace:^"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@core/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "react": "19.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  }
+}

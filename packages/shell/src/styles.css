@@ -1,0 +1,2 @@
+/* Generate the utilities used by the compiled shell components. Import after @core/ui/styles.css. */
+@source "./";

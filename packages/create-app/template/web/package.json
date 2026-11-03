@@ -1,0 +1,34 @@
+{
+  "name": "__APP_ID__-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port __WEB_DEV_PORT__",
+    "build": "next build",
+    "start": "next start --port __WEB_DEV_PORT__",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "echo \"no web tests yet\""
+  },
+  "dependencies": {
+    "@core/auth": "__CORE_AUTH_VERSION__",
+    "@core/sdk": "__CORE_SDK_VERSION__",
+    "@core/shell": "__CORE_SHELL_VERSION__",
+    "@core/ui": "__CORE_UI_VERSION__",
+    "next": "16.4.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@core/config": "__CORE_CONFIG_VERSION__",
+    "@tailwindcss/postcss": "4.3.4",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "tailwindcss": "4.3.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1"
+  }
+}

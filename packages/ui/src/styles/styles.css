@@ -1,0 +1,76 @@
+/*
+ * @core/ui design tokens + component styles.
+ *
+ * In an app's global CSS:
+ *   @import "tailwindcss";
+ *   @import "@core/ui/styles.css";
+ *
+ * Tokens are CSS variables so themes (and future tenant branding) swap without rebuilding apps.
+ */
+
+/* Let the consuming app's Tailwind build generate the utilities our compiled components use. */
+@source "./";
+
+@theme inline {
+  --color-bg: var(--core-bg);
+  --color-surface: var(--core-surface);
+  --color-surface-muted: var(--core-surface-muted);
+  --color-border: var(--core-border);
+  --color-fg: var(--core-fg);
+  --color-fg-muted: var(--core-fg-muted);
+  --color-brand: var(--core-brand);
+  --color-brand-fg: var(--core-brand-fg);
+  --color-brand-subtle: var(--core-brand-subtle);
+  --color-success: var(--core-success);
+  --color-warning: var(--core-warning);
+  --color-danger: var(--core-danger);
+  --color-chrome: var(--core-chrome);
+  --color-chrome-fg: var(--core-chrome-fg);
+  --radius-card: 0.75rem;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --core-bg: #f6f7f9;
+  --core-surface: #ffffff;
+  --core-surface-muted: #f1f3f6;
+  --core-border: #e2e6ec;
+  --core-fg: #121826;
+  --core-fg-muted: #5b6474;
+  --core-brand: #2453d6;
+  --core-brand-fg: #ffffff;
+  --core-brand-subtle: #e8eefc;
+  --core-success: #1a7f4b;
+  --core-warning: #a35d00;
+  --core-danger: #c02b2b;
+  --core-chrome: #0f1729;
+  --core-chrome-fg: #e7ebf3;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --core-bg: #0b0f17;
+  --core-surface: #131a26;
+  --core-surface-muted: #1a2230;
+  --core-border: #263043;
+  --core-fg: #e7ebf3;
+  --core-fg-muted: #98a2b3;
+  --core-brand: #6f93ff;
+  --core-brand-fg: #0b0f17;
+  --core-brand-subtle: #1c2847;
+  --core-success: #4cc38a;
+  --core-warning: #f0b45a;
+  --core-danger: #ff6b6b;
+  --core-chrome: #070a10;
+  --core-chrome-fg: #e7ebf3;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    background: var(--core-bg);
+    color: var(--core-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
