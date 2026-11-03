@@ -1,0 +1,9 @@
+# Add this entry to platform-gateway/routes.yaml (via PR to the platform team).
+- id: orders
+  title: Orders
+  description: TODO one-line description shown in the app launcher
+  team: Team Orders
+  icon: "📦"
+  basePath: /orders
+  web: { service: orders-web, port: 3000, devPort: 3101 }
+  api: { path: /api/orders, service: orders-api, port: 4000, devPort: 4101 }
