@@ -1,0 +1,9 @@
+# Add this entry to platform-gateway/routes.yaml (via PR to the platform team).
+- id: analytics
+  title: Analytics
+  description: See platform-gateway/routes.yaml
+  team: Team Analytics
+  icon: "📈"
+  basePath: /analytics
+  web: { service: analytics-web, port: 3000, devPort: 3102 }
+  api: { path: /api/analytics, service: analytics-api, port: 4000, devPort: 4102 }
