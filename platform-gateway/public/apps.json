@@ -1,0 +1,29 @@
+{
+  "generatedFrom": "routes.yaml",
+  "apps": [
+    {
+      "id": "home",
+      "title": "Home",
+      "description": "Platform landing page and sign-in",
+      "team": "Platform",
+      "icon": "🏠",
+      "basePath": "/"
+    },
+    {
+      "id": "orders",
+      "title": "Orders",
+      "description": "Create, track and fulfil customer orders",
+      "team": "Team Orders",
+      "icon": "📦",
+      "basePath": "/orders"
+    },
+    {
+      "id": "analytics",
+      "title": "Analytics",
+      "description": "Revenue and order insights across the business",
+      "team": "Team Analytics",
+      "icon": "📈",
+      "basePath": "/analytics"
+    }
+  ]
+}

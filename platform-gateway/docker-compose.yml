@@ -1,0 +1,97 @@
+# The whole platform on one machine, the way it runs in production:
+# one gateway, independently built and deployed apps, shared auth.
+#
+#   docker compose up -d registry           # 1. private npm registry
+#   (publish @core/* from ../core)          # 2. see README
+#   docker compose up -d --build            # 3. everything → http://localhost:8080
+#
+# Each app is built from its own repo (sibling folders here; separate Git repos in reality).
+# In a real environment these would be `image:` references pushed by each team's CI.
+
+name: core-platform
+
+x-auth-env: &auth-env
+  AUTH_MODE: ${AUTH_MODE:-mock}
+  AUTH_SECRET: ${AUTH_SECRET:-core-platform-mock-secret-local-dev-only-0000}
+  APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+  AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+  AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+  AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
+  AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
+  AUTH0_ROLES_CLAIM: ${AUTH0_ROLES_CLAIM:-}
+
+x-web-env: &web-env
+  <<: *auth-env
+  PLATFORM_REGISTRY_URL: http://gateway/platform/apps.json
+
+x-team-build: &team-build
+  args:
+    CORE_REGISTRY: ${CORE_REGISTRY:-http://host.docker.internal:4873}
+  extra_hosts:
+    - host.docker.internal:host-gateway
+
+services:
+  registry:
+    image: verdaccio/verdaccio:6
+    ports: ["4873:4873"]
+    volumes:
+      - ./verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro
+      - registry-storage:/verdaccio/storage
+    profiles: ["registry"]
+
+  gateway:
+    build: .
+    image: core-platform/gateway:local
+    ports: ["8080:80"]
+    env_file: ["upstreams/${UPSTREAMS:-docker}.env"]
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  home:
+    build: { context: ../core, dockerfile: apps/home/Dockerfile }
+    image: core-platform/home:local
+    environment:
+      <<: *web-env
+      # /docs shows the latest published @core/* versions.
+      CORE_REGISTRY_URL: http://registry:4873
+
+  orders-web:
+    build:
+      <<: *team-build
+      context: ../team-orders
+      dockerfile: web/Dockerfile
+    image: team-orders/web:local
+    environment:
+      <<: *web-env
+      ORDERS_API_URL: http://orders-api:4000
+
+  orders-api:
+    build:
+      <<: *team-build
+      context: ../team-orders
+      dockerfile: api/Dockerfile
+    image: team-orders/api:local
+    environment: *auth-env
+
+  analytics-web:
+    build:
+      <<: *team-build
+      context: ../team-analytics
+      dockerfile: web/Dockerfile
+    image: team-analytics/web:local
+    environment:
+      <<: *web-env
+      ANALYTICS_API_URL: http://analytics-api:4000
+
+  analytics-api:
+    build:
+      <<: *team-build
+      context: ../team-analytics
+      dockerfile: api/Dockerfile
+    image: team-analytics/api:local
+    environment:
+      <<: *auth-env
+      ORDERS_API_URL: http://orders-api:4000
+
+volumes:
+  registry-storage:
