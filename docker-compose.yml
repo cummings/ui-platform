@@ -50,7 +50,10 @@ services:
   home:
     build: { context: ../core, dockerfile: apps/home/Dockerfile }
     image: core-platform/home:local
-    environment: *web-env
+    environment:
+      <<: *web-env
+      # /docs shows the latest published @core/* versions.
+      CORE_REGISTRY_URL: http://registry:4873
 
   orders-web:
     build:
