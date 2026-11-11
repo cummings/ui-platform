@@ -20,6 +20,9 @@ run the gateway with `UPSTREAMS=dev` (see platform-gateway README). It then prox
 
 ## What the platform gives you
 
+Full guides and API reference: **`/docs`** on the platform (locally http://localhost:8080/docs).
+
+
 - `@core/shell`: the platform chrome (`src/components/AppShell.tsx`)
 - `@core/ui`: the design system
 - `@core/auth`: sign-in enforcement (`src/proxy.ts`) and `requireSession()`

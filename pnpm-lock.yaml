@@ -42,17 +42,17 @@ importers:
   web:
     dependencies:
       '@core/auth':
-        specifier: ^0.1.0
-        version: 0.1.1(@types/react@19.3.0)(next@16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.1.2
+        version: 0.1.2(@types/react@19.3.0)(next@16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@core/sdk':
         specifier: ^0.1.0
         version: 0.1.0(@types/react@19.3.0)(react@19.3.1)
       '@core/shell':
-        specifier: ^0.1.0
-        version: 0.1.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
+        specifier: ^0.1.2
+        version: 0.1.2(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
       '@core/ui':
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
+        specifier: ^0.1.1
+        version: 0.1.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
       next:
         specifier: 16.4.4
         version: 16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -104,8 +104,8 @@ packages:
       react: ^18.0.0 || ~19.0.1 ||  ~19.1.2 || ^19.2.1
       react-dom: ^18.0.0 || ~19.0.1 || ~19.1.2 || ^19.2.1
 
-  '@core/auth@0.1.1':
-    resolution: {integrity: sha512-eDl0yVu50pYlGPmKJJllJZdifE3kBLL6fcjpb77r1EFta5kB+JmhixQthBq36poNw8hdAG2oHy8NUL8ZiR1aHg==}
+  '@core/auth@0.1.2':
+    resolution: {integrity: sha512-zIo+W6ZoonYP5ELpNAKNWW6XqTNN0fwXlHWvkF2Lm5OHICgPKybrlvzAv6v2swIc4wHhIIswLkHuUnvuToaMbw==}
     peerDependencies:
       next: ^16.0.0
 
@@ -135,14 +135,14 @@ packages:
     peerDependencies:
       fastify: ^5.0.0
 
-  '@core/shell@0.1.1':
-    resolution: {integrity: sha512-BmNyJ+Wxc97McaWVfD8LkdD3fPa1NHWvTbOYNWNUoySN+0F0NbwRiOgrOqhPyCyW1lm5nIxGGl+HDiRd7MYwOQ==}
+  '@core/shell@0.1.2':
+    resolution: {integrity: sha512-TYaE2o85F1FMQHmFK2rWzx144sa8SHrMBM6jkpiDkSj3xlkUAD6QjNpvgV0po05rG/snovBR03kPX7f2TUpJqw==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@core/ui@0.1.0':
-    resolution: {integrity: sha512-EY6Ur8Kc1RHkQ9SmBfDYS7JadzNzpgsA7NF9Zrbv1eUfBT319gEn5o2PaefIIezPcDS9YE97Fl6ScUorFuu9+A==}
+  '@core/ui@0.1.1':
+    resolution: {integrity: sha512-HF0LtX2PFltkOUG/UPB1MPIcfRKxiHgf+Ijuc5ybSDi02pn7e1t91f2QgZqx1aS5mJkqycKVle67n23kFiBH1A==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -1828,7 +1828,7 @@ snapshots:
       react-dom: 19.3.1(react@19.3.1)
       swr: 2.5.1(react@19.3.1)
 
-  '@core/auth@0.1.1(@types/react@19.3.0)(next@16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@core/auth@0.1.2(@types/react@19.3.0)(next@16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@auth0/nextjs-auth0': 4.33.0(next@16.4.4(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@core/sdk': 0.2.0(@types/react@19.3.0)(react@19.3.1)
@@ -1864,17 +1864,17 @@ snapshots:
       fastify-plugin: 5.1.0
       jose: 6.2.15
 
-  '@core/shell@0.1.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)':
+  '@core/shell@0.1.2(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)':
     dependencies:
       '@core/sdk': 0.2.0(@types/react@19.3.0)(react@19.3.1)
-      '@core/ui': 0.1.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
+      '@core/ui': 0.1.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
     transitivePeerDependencies:
       - '@types/react'
       - tailwindcss
 
-  '@core/ui@0.1.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)':
+  '@core/ui@0.1.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.4)':
     dependencies:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
