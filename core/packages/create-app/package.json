@@ -1,0 +1,16 @@
+{
+  "name": "@core/create-app",
+  "version": "0.1.5",
+  "description": "Scaffold a new team app repo for the platform: pnpm create @core/app <id> --route /<id>",
+  "type": "module",
+  "bin": {
+    "create-app": "./bin/index.mjs"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "scripts": {
+    "typecheck": "node --check bin/index.mjs"
+  }
+}

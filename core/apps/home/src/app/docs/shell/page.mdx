@@ -1,0 +1,128 @@
+import { PropsTable } from "@/components/docs/PropsTable";
+import { Callout } from "@/components/docs/Callout";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Shell" };
+
+# @core/shell
+
+The platform chrome every app renders: top bar, app launcher, breadcrumb, in-app side nav, user menu
+(with theme toggle and sign out).
+
+<InstallLine packages={["shell"]} />
+
+| Entry point | Use from | Exports |
+|---|---|---|
+| `@core/shell` | Client Components | `PlatformShell`, `AppLauncher`, `UserMenu`, `NavItem` |
+| `@core/shell/server` | Server Components | `loadAppRegistry()` |
+| `@core/shell/styles.css` | your global CSS | Tailwind sources for the shell |
+
+## Setup
+
+```css
+/* file: web/src/app/globals.css */
+@import "tailwindcss";
+@import "@core/ui/styles.css";
+@import "@core/shell/styles.css";
+```
+
+`PlatformShell` takes your router's `Link` component and the current pathname. Functions can't cross from
+Server to Client Components, so wrap it in a small client component:
+
+```tsx
+// file: web/src/components/AppShell.tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+import type { PlatformApp, PlatformUser } from "@core/sdk";
+import { PlatformShell, type NavItem } from "@core/shell";
+
+const nav: NavItem[] = [
+  { label: "All orders", href: "/" },
+  { label: "New order", href: "/new" },
+];
+
+export function AppShell(props: { user: PlatformUser; apps: PlatformApp[]; children: ReactNode }) {
+  return <PlatformShell {...props} appId="orders" nav={nav} activePath={usePathname()} linkComponent={Link} />;
+}
+```
+
+Then render it from your root layout with the session and the app registry:
+
+```tsx
+// file: web/src/app/layout.tsx
+import { requireSession } from "@core/auth";
+import { PlatformProvider } from "@core/sdk/client";
+import { loadAppRegistry } from "@core/shell/server";
+import { AppShell } from "@/components/AppShell";
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [session, apps] = await Promise.all([requireSession(), loadAppRegistry()]);
+  return (
+    <html lang="en">
+      <body>
+        <PlatformProvider user={session.user} appId="orders" apps={apps} flags={{}}>
+          <AppShell user={session.user} apps={apps}>{children}</AppShell>
+        </PlatformProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+## PlatformShell
+
+<PropsTable
+  rows={[
+    { name: "user", type: "PlatformUser", required: true, description: "The signed-in user, from requireSession()." },
+    { name: "apps", type: "PlatformApp[]", required: true, description: "The registry, from loadAppRegistry(). Feeds the launcher and breadcrumb." },
+    { name: "appId", type: "string", required: true, description: "Your id from routes.yaml; highlights your app in the launcher." },
+    { name: "nav", type: "NavItem[]", description: "In-app side navigation. Omit for no side nav." },
+    { name: "activePath", type: "string", description: "Current pathname inside your app (usePathname())." },
+    { name: "linkComponent", type: "ComponentType", default: "<a>", description: "Pass next/link so in-app navigation stays client-side." },
+    { name: "children", type: "ReactNode", required: true, description: "Your page content." },
+  ]}
+/>
+
+### NavItem
+
+<PropsTable
+  title="NavItem fields"
+  rows={[
+    { name: "label", type: "string", required: true, description: "Text shown in the side nav." },
+    { name: "href", type: "string", required: true, description: "Path inside your app, without basePath (\"/new\", not \"/orders/new\")." },
+    { name: "icon", type: "ReactNode", description: "Optional leading icon." },
+    { name: "exact", type: "boolean", default: "false", description: "Highlight only on an exact match. Otherwise it also highlights on sub-paths. Since 0.2.0." },
+  ]}
+/>
+
+## loadAppRegistry()
+
+```ts
+import { loadAppRegistry } from "@core/shell/server";
+const apps: PlatformApp[] = await loadAppRegistry();
+```
+
+Fetches the gateway's `/platform/apps.json` (generated from `routes.yaml`), cached for 60 seconds.
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `PLATFORM_REGISTRY_URL` | `http://gateway/platform/apps.json` | Where to read the registry |
+| `PLATFORM_APPS` | — | JSON fallback when the registry is unreachable |
+
+## Navigation between apps
+
+<Callout type="rule">
+Use a plain `<a href="/analytics">` to link to **another app**. That's a full page load into a separately
+deployed zone. Use `next/link` only **inside** your own app.
+</Callout>
+
+The theme toggle writes a root-path `platform_theme` cookie. Read it in your layout to set
+`data-theme` on `<html>` so the choice follows the user across apps:
+
+```tsx
+const theme = (await cookies()).get("platform_theme")?.value === "dark" ? "dark" : "light";
+return <html lang="en" data-theme={theme}>…</html>;
+```

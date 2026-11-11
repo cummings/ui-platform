@@ -1,0 +1,41 @@
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Config" };
+
+# @core/config
+
+Shared TypeScript and ESLint configuration, so every repo has the same strictness and import rules.
+
+<InstallLine packages={["config"]} />
+
+## TypeScript presets
+
+| Preset | For |
+|---|---|
+| `@core/config/tsconfig/nextjs.json` | Next.js web apps |
+| `@core/config/tsconfig/node.json` | Node services (NodeNext modules) |
+| `@core/config/tsconfig/library.json` | React libraries |
+| `@core/config/tsconfig/base.json` | Everything above extends this: `strict`, `noUncheckedIndexedAccess` |
+
+```json
+// file: api/tsconfig.json
+{
+  "extends": "@core/config/tsconfig/node.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "dist", "noEmit": true },
+  "include": ["src"]
+}
+```
+
+Set `rootDir` and `outDir` in your own tsconfig. They resolve relative to the file that declares them (fixed in 0.1.1).
+
+## ESLint
+
+```js
+// file: web/eslint.config.js
+import platform from "@core/config/eslint";
+
+export default [{ ignores: [".next/**", "next-env.d.ts"] }, ...platform];
+```
+
+Beyond `typescript-eslint` recommended, the preset enforces `consistent-type-imports` and **forbids deep imports**
+such as `@core/ui/src/…` and `@core/ui/dist/…`. Only public entry points are part of the contract.

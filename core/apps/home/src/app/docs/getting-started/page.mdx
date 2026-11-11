@@ -1,0 +1,154 @@
+import { Callout } from "@/components/docs/Callout";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Getting started" };
+
+# Getting started
+
+From nothing to your app running inside the platform in about ten minutes.
+
+<InstallLine packages={["create-app"]} />
+
+## Registry access
+
+`@core/*` packages live on the platform's **private npm registry**. How you authenticate depends on where you're
+installing from:
+
+| Who | Credential | Can | How to get it |
+|---|---|---|---|
+| You, on your laptop | Personal token from your SSO login | Read `@core/*` | `npm login --registry https://npm.company.com --scope=@core` |
+| Your team's CI | `CORE_REGISTRY_TOKEN` secret | Read `@core/*` | Requested from the platform team (below) |
+| Core repo release job | Publish token | Publish `@core/*` | Platform team only |
+
+<Callout type="info" title="Local development needs no token">
+The local Verdaccio registry from `platform-gateway` lets anyone install `@core/*` packages, so `pnpm install` and
+`docker compose build` work out of the box. The rest of this section applies to the company registry.
+</Callout>
+
+### Get a CI token
+
+1. Ask in `#platform` (or open a platform-team ticket) for a **read-only `@core` token** for your team. Include your
+   team name and repo.
+2. The platform team creates a read-only service account for your team and shares the token through the secret
+   store. It never goes in chat or email.
+3. Store it as a repository (or team-level) CI secret named **`CORE_REGISTRY_TOKEN`**. Set the repo variable
+   `CORE_REGISTRY` to the registry URL, e.g. `https://npm.company.com`.
+
+That's all the generated CI workflow needs. It adds the token to `.npmrc` only for the install step:
+
+```yaml
+# file: .github/workflows/ci.yml
+- run: |
+    sed -i "s#^@core:registry=.*#@core:registry=${CORE_REGISTRY}/#" .npmrc
+    echo "//${CORE_REGISTRY#*://}/:_authToken=${{ secrets.CORE_REGISTRY_TOKEN }}" >> .npmrc
+- run: pnpm install --frozen-lockfile
+```
+
+Image builds receive it as a **BuildKit secret**. The Dockerfile uses it and removes it within a single step, so it
+never lands in an image layer:
+
+```yaml
+# file: .github/workflows/ci.yml
+- uses: docker/build-push-action@v6
+  with:
+    build-args: CORE_REGISTRY=${{ env.CORE_REGISTRY }}
+    secrets: core_registry_token=${{ secrets.CORE_REGISTRY_TOKEN }}
+```
+
+<Callout type="rule" title="Handle the token like a password">
+Never commit it, put it in `.npmrc` in the repo, pass it as a `--build-arg`, or print it in logs. Tokens are
+read-only and per team, so a leaked one can be revoked without affecting other teams. If one leaks, tell
+`#platform` immediately.
+</Callout>
+
+## 1. Scaffold your repo
+
+```bash
+pnpm --config.@core:registry=http://localhost:4873/ create @core/app inventory \
+  --title Inventory --team "Team Inventory" --icon 📦 \
+  --web-port 3103 --api-port 4103
+cd team-inventory && git init && pnpm install
+```
+
+| Flag | Meaning | Default |
+|---|---|---|
+| `<id>` | App id; becomes `/<id>` and `/api/<id>` | required |
+| `--title` | Name in the launcher and chrome | from id |
+| `--team` | Owning team, shown on the Home page | `Team <Title>` |
+| `--web-port` / `--api-port` | Ports on your laptop for `pnpm dev` | `3101` / `4101` |
+| `--icon` | Emoji for the launcher | `▢` |
+| `--registry` | Registry to resolve `@core/*` versions from | `$CORE_REGISTRY_URL` or `http://localhost:4873` |
+
+New apps pin the latest published `@core/*` versions at scaffold time.
+
+## 2. What you got
+
+```txt
+team-inventory/
+├─ web/                     Next.js app, basePath "/inventory"
+│  ├─ src/proxy.ts          sign-in enforcement (@core/auth)
+│  ├─ src/app/layout.tsx    PlatformProvider + platform chrome
+│  ├─ src/app/error.tsx     outage boundary inside the chrome
+│  ├─ src/components/AppShell.tsx   your in-app nav
+│  ├─ src/lib/api.ts        server-side client for your API
+│  └─ Dockerfile
+├─ api/                     Fastify service under /api/inventory
+│  ├─ src/app.ts            routes + @core/server-auth
+│  ├─ src/app.test.ts       tests with createTestToken()
+│  └─ Dockerfile
+├─ route.yaml               your entry for the gateway's routes.yaml
+├─ renovate.json            grouped @core upgrades
+├─ .github/workflows/ci.yml lint · typecheck · test · build · push images
+└─ .npmrc                   @core scope → platform registry
+```
+
+## 3. Run it against the real platform
+
+Sign-in lives on the Home app, so develop **through the gateway**. Run the gateway in Docker, pointed at your
+laptop:
+
+```bash
+# in platform-gateway/
+UPSTREAMS=dev docker compose up -d gateway home
+# in your repo
+pnpm dev     # web :3103, api :4103
+```
+
+Then open `http://localhost:8080/inventory` and sign in as a persona. `UPSTREAMS=dev` makes the gateway proxy each
+route to `host.docker.internal:<devPort>`.
+
+<Callout type="warning">
+The gateway only knows your app once it's in `routes.yaml`. While your PR is open, add the entry locally and run
+`pnpm generate` in platform-gateway.
+</Callout>
+
+## 4. Register your routes
+
+Copy `route.yaml` into `platform-gateway/routes.yaml` and open a PR to the platform team:
+
+```yaml
+# file: platform-gateway/routes.yaml
+- id: inventory
+  title: Inventory
+  description: Stock levels across warehouses
+  team: Team Inventory
+  icon: "📦"
+  basePath: /inventory
+  web: { service: inventory-web, port: 3000, devPort: 3103 }
+  api: { path: /api/inventory, service: inventory-api, port: 4000, devPort: 4103 }
+```
+
+The generator validates it: unique id, `basePath: /<id>`, `api.path: /api/<id>`, and no reserved prefixes. Once it
+merges, the gateway routes your app and every launcher lists it within a minute. Nobody needs to redeploy.
+
+## 5. Ship it
+
+CI builds two images, `web` and `api`, from your repo root:
+
+```bash
+docker build -f web/Dockerfile --build-arg CORE_REGISTRY=https://npm.company.com \
+  --secret id=core_registry_token,env=CORE_REGISTRY_TOKEN -t inventory-web .
+```
+
+Both images run as non-root and include health checks (`/inventory/healthz`, `/healthz`). Give them the same
+auth env as every other app (see [Auth → Environment](/docs/auth#environment)).

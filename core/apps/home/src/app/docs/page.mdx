@@ -1,0 +1,47 @@
+import { PackageGrid } from "@/components/docs/PackageGrid";
+import { RequestFlow } from "@/components/docs/RequestFlow";
+import { Callout } from "@/components/docs/Callout";
+
+export const metadata = { title: "Overview" };
+
+# Building on the Core Platform
+
+The platform lets your team ship its own app, from your own repo, pipeline and release schedule. Users still get
+**one product**: one domain, one sign-in, one look and feel. You own your features and backend. The platform
+gives you everything else as versioned npm packages.
+
+## What you get
+
+<PackageGrid />
+
+Versions come live from the platform's private npm registry. Install with your repo's `.npmrc` pointing the
+`@core` scope at it (generated apps already do this).
+
+## How a request flows
+
+<RequestFlow />
+
+1. The **gateway** routes `/<your-app>/*` to your web app and `/api/<your-app>/*` to your API. It never rewrites
+   paths, so your app serves under its own `basePath`.
+2. Your app's `proxy.ts` (from `@core/auth`) checks the platform session. Signed-out users go to `/auth/login`
+   on the Home app and come back afterwards.
+3. Your Server Components call your API **from the server** with the user's access token. Tokens never reach
+   the browser.
+4. Your API verifies the token and its scopes with `@core/server-auth`.
+
+## Where to go next
+
+| I want to… | Read |
+|---|---|
+| Create a new app and get it routed | [Getting started](/docs/getting-started) |
+| Render the platform chrome and navigation | [Shell](/docs/shell) |
+| Use the design system | [Design system (ui)](/docs/ui) |
+| Get the signed-in user, protect pages | [Auth](/docs/auth) |
+| Use context and hooks, call my API, share events | [SDK](/docs/sdk) · [Cross-app events](/docs/events) |
+| Secure my backend | [Backends (server-auth)](/docs/server-auth) |
+| Understand upgrades and the rules | [Versioning & rules](/docs/versioning) |
+
+<Callout type="rule" title="The three rules that matter most">
+Serve only under your agreed routes. Keep access tokens on the server. Enforce authorization in your API, not just
+the UI.
+</Callout>

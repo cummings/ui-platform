@@ -1,0 +1,9 @@
+# Add this entry to platform-gateway/routes.yaml (via PR to the platform team).
+- id: __APP_ID__
+  title: __APP_TITLE__
+  description: TODO one-line description shown in the app launcher
+  team: __TEAM__
+  icon: "__ICON__"
+  basePath: __BASE_PATH__
+  web: { service: __APP_ID__-web, port: 3000, devPort: __WEB_DEV_PORT__ }
+  api: { path: __API_PATH__, service: __APP_ID__-api, port: 4000, devPort: __API_DEV_PORT__ }

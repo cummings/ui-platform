@@ -1,0 +1,67 @@
+import { Callout } from "@/components/docs/Callout";
+
+export const metadata = { title: "Versioning & rules" };
+
+# Versioning & rules of the road
+
+## How @core packages are versioned
+
+- Every change to a published package ships with a **changeset** that explains it. The changelog in each package
+  is generated from these.
+- Packages are still **0.x**. Caret ranges then only float patches: `^0.1.0` gets `0.1.9` but **not** `0.2.0`.
+  Treat a minor as a deliberate upgrade and read its changelog. We'll move to 1.0 once the APIs settle.
+- `react`, `react-dom`, `next` and `tailwindcss` are **peer dependencies**: you install them, and the platform
+  supports one major of each at a time.
+- Import only public entry points (`@core/ui`, `@core/ui/client`, `@core/shell/server`, …). Deep imports are
+  linted against and aren't covered by semver.
+
+## Upgrading
+
+Generated repos include a Renovate config that groups `@core/*` updates into one PR and auto-merges patch and
+minor updates when your CI is green.
+
+Different apps can run different versions at the same time. Right now Orders runs `@core/sdk@0.2` while Analytics
+is on `0.1`, and they still share sign-in, chrome and events. Upgrade on your schedule, within the support window
+the platform team announces.
+
+```bash
+pnpm --filter ./web up "@core/sdk@^0.2.0"
+```
+
+## Rules of the road
+
+<Callout type="rule" title="1. Serve only under your agreed routes">
+Web under `/<id>` (Next.js `basePath`), API under `/api/<id>`. The gateway never rewrites paths. Change routes only
+by PR to `platform-gateway/routes.yaml`.
+</Callout>
+
+<Callout type="rule" title="2. Keep access tokens on the server">
+Call your API from Server Components, Server Actions or Route Handlers. Client Components use your own Route Handlers.
+</Callout>
+
+<Callout type="rule" title="3. Authorize in the API">
+Use `requireScopes` as an `onRequest` hook on every route. Role checks in the UI are a convenience, not security.
+</Callout>
+
+<Callout type="rule" title="4. Use the platform chrome and design system">
+Wrap your layout in `PlatformProvider` and `PlatformShell`; use `@core/ui` before building your own components.
+</Callout>
+
+<Callout type="rule" title="5. Link correctly">
+Use plain `<a>` to other apps (a full page load) and `next/link` inside your own.
+</Callout>
+
+<Callout type="rule" title="6. Fail inside the chrome">
+Keep `app/error.tsx` (included in the template) so outages show a recoverable message, and expose `/healthz` on both
+web and API.
+</Callout>
+
+<Callout type="rule" title="7. Treat events as contracts">
+Only add fields; register new events in the [catalogue](/docs/events#event-catalogue).
+</Callout>
+
+## Getting help
+
+- Questions: the `#platform` channel.
+- Bugs and feature requests for `@core/*`: open an issue on the core repo, or a PR with a changeset.
+- Changes to your routes: PR to `platform-gateway`.

@@ -1,0 +1,7 @@
+{
+  "extends": "@core/config/tsconfig/library.json",
+  "compilerOptions": {
+    "paths": { "@core/sdk": ["./src/index.ts"] }
+  },
+  "include": ["src"]
+}

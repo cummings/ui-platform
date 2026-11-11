@@ -1,0 +1,69 @@
+import { Callout } from "@/components/docs/Callout";
+
+export const metadata = { title: "Cross-app events" };
+
+# Cross-app events
+
+A typed event bus in `@core/sdk` lets apps react to each other without importing each other. When Orders creates
+an order, an open Analytics dashboard refreshes immediately.
+
+## Delivery
+
+- **Same tab**: listeners in the current page receive the event.
+- **Other tabs**: delivered through `BroadcastChannel` to every platform tab on the same origin.
+- **Not durable**: an app that isn't open misses the event. Use events for UI freshness only; anything that must
+  happen belongs in backend messaging.
+
+## Publish an event
+
+Declare the event's shape once in your app. That declaration is your public contract.
+
+```ts
+// file: web/src/lib/events.ts
+declare module "@core/sdk" {
+  interface PlatformEventMap {
+    "orders.created": { id: string; customer: string; total: number };
+  }
+}
+export {};
+```
+
+```tsx
+"use client";
+import { usePlatformEvents } from "@core/sdk/client";
+import "@/lib/events";
+
+const events = usePlatformEvents();
+events.emit("orders.created", { id: order.id, customer: order.customer, total: order.total });
+```
+
+Emit after the server has confirmed the change (for example, on the page you redirect to after a Server Action),
+not optimistically.
+
+## Subscribe
+
+Consumers declare the same shape, then subscribe for the component's lifetime:
+
+```tsx
+"use client";
+import { usePlatformEvent, useQueryClient } from "@core/sdk/client";
+import "@/lib/events";
+
+const queryClient = useQueryClient();
+usePlatformEvent("orders.created", (e) => {
+  // e: { type, payload: { id, customer, total }, source: "orders", at: ISO string }
+  void queryClient.invalidateQueries({ queryKey: ["summary"] });
+});
+```
+
+## Event catalogue
+
+| Event | Owner | Payload | Consumers |
+|---|---|---|---|
+| `orders.created` | Team Orders | `{ id, customer, total }` | Analytics |
+| `orders.status-changed` | Team Orders | `{ id, status }` | Analytics |
+
+<Callout type="rule" title="Events are contracts">
+Name events `<app>.<past-tense-verb>`. Only add fields; never remove or rename them. If you need to break the shape,
+publish a new event name and add your event to this catalogue in the same PR.
+</Callout>

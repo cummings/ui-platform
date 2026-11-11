@@ -1,0 +1,42 @@
+{
+  "name": "@core/auth",
+  "version": "0.1.2",
+  "description": "Shared Auth0 single sign-on for platform Next.js apps (with a local mock mode)",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./token": {
+      "types": "./dist/token.d.ts",
+      "import": "./dist/token.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auth0/nextjs-auth0": "4.33.0",
+    "@core/sdk": "workspace:^",
+    "jose": "6.2.15"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0"
+  },
+  "devDependencies": {
+    "@core/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "next": "16.4.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  }
+}
