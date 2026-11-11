@@ -1,6 +1,6 @@
 {
   "name": "@core/create-app",
-  "version": "0.1.2",
+  "version": "0.1.5",
   "description": "Scaffold a new team app repo for the platform: pnpm create @core/app <id> --route /<id>",
   "type": "module",
   "bin": {

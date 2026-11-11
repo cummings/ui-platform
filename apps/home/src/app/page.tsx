@@ -1,6 +1,7 @@
 import { requireSession } from "@core/auth";
 import { loadAppRegistry } from "@core/shell/server";
-import { Badge, Card, CardBody, EmptyState, PageHeader } from "@core/ui";
+import Link from "next/link";
+import { Badge, Button, Card, CardBody, EmptyState, PageHeader } from "@core/ui";
 
 export default async function HomePage() {
   const [{ user }, apps] = await Promise.all([requireSession(), loadAppRegistry()]);
@@ -36,6 +37,19 @@ export default async function HomePage() {
           ))}
         </div>
       )}
+      <Card className="mt-8">
+        <CardBody className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-semibold text-fg">Building on the platform?</h2>
+            <p className="mt-1 text-sm text-fg-muted">
+              Guides and reference for every @core package: shell, design system, auth, SDK, events and backends.
+            </p>
+          </div>
+          <Link href="/docs">
+            <Button variant="secondary">Developer docs</Button>
+          </Link>
+        </CardBody>
+      </Card>
     </>
   );
 }

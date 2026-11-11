@@ -1,0 +1,206 @@
+import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Input, PageHeader, Select, Spinner, Stat, Table } from "@core/ui";
+import { Example } from "@/components/docs/Example";
+import { PropsTable } from "@/components/docs/PropsTable";
+import { Callout } from "@/components/docs/Callout";
+import { DialogDemo } from "@/components/docs/DialogDemo";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Design system" };
+
+# @core/ui
+
+The platform design system: CSS-variable tokens plus React components styled with Tailwind CSS v4. Everything on
+this page is rendered with the real components, so toggle dark mode from the user menu to see the tokens switch.
+
+<InstallLine packages={["ui"]} />
+
+## Setup
+
+```css
+/* file: web/src/app/globals.css */
+@import "tailwindcss";
+@import "@core/ui/styles.css";
+```
+
+Your app needs `tailwindcss` v4 and `@tailwindcss/postcss` (peer dependencies; generated apps have them).
+
+## Server and client components
+
+| Import | Components | Server Components? |
+|---|---|---|
+| `@core/ui` | `Card`, `CardHeader`, `CardBody`, `Table`, `Stat`, `Badge`, `EmptyState`, `PageHeader`, `cn`, plus everything below | ✅ Yes, including function props such as `Table` cells |
+| `@core/ui/client` (also re-exported from `@core/ui`) | `Button`, `Spinner`, `Input`, `Select`, `Dialog` | Render them anywhere; event handlers need a Client Component |
+
+Import everything from `@core/ui`. The package keeps the client boundary in the right place for you.
+
+## Tokens
+
+Use token utilities instead of raw colours, so themes (and future tenant branding) just work.
+
+| Utility | Use for |
+|---|---|
+| `bg-bg` · `bg-surface` · `bg-surface-muted` | Page, cards, subtle fills |
+| `text-fg` · `text-fg-muted` | Primary and secondary text |
+| `border-border` | All borders and dividers |
+| `bg-brand` · `text-brand` · `bg-brand-subtle` · `text-brand-fg` | Primary actions, links, selection |
+| `text-success` · `text-warning` · `text-danger` (and `bg-*/10`) | Status |
+| `rounded-card` | Cards, panels, dialogs |
+
+<div className="my-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+  {["bg-bg", "bg-surface", "bg-surface-muted", "bg-brand", "bg-brand-subtle", "bg-success", "bg-warning", "bg-danger"].map((c) => (
+    <div key={c} className="overflow-hidden rounded-lg border border-border">
+      <div className={`h-12 ${c}`} />
+      <p className="bg-surface px-2 py-1 font-mono text-[11px] text-fg-muted">{c}</p>
+    </div>
+  ))}
+</div>
+
+## Button
+
+<Example code={`<Button>Save</Button>
+<Button variant="secondary">Cancel</Button>
+<Button variant="ghost">More</Button>
+<Button variant="danger">Delete</Button>
+<Button size="sm">Small</Button>
+<Button loading>Saving</Button>
+<Button disabled>Disabled</Button>`}>
+  <Button>Save</Button>
+  <Button variant="secondary">Cancel</Button>
+  <Button variant="ghost">More</Button>
+  <Button variant="danger">Delete</Button>
+  <Button size="sm">Small</Button>
+  <Button loading>Saving</Button>
+  <Button disabled>Disabled</Button>
+</Example>
+
+<PropsTable rows={[
+  { name: "variant", type: "\"primary\" | \"secondary\" | \"ghost\" | \"danger\"", default: "\"primary\"", description: "Visual style. One primary action per view." },
+  { name: "size", type: "\"sm\" | \"md\"", default: "\"md\"", description: "Height and padding." },
+  { name: "loading", type: "boolean", default: "false", description: "Shows a spinner, disables the button and sets aria-busy." },
+  { name: "…button props", type: "ButtonHTMLAttributes", description: "onClick, type, disabled and so on. Forwards its ref." },
+]} />
+
+## Badge
+
+<Example code={`<Badge>Neutral</Badge>
+<Badge tone="brand">Brand</Badge>
+<Badge tone="success">Shipped</Badge>
+<Badge tone="warning">Pending</Badge>
+<Badge tone="danger">Failed</Badge>`}>
+  <Badge>Neutral</Badge>
+  <Badge tone="brand">Brand</Badge>
+  <Badge tone="success">Shipped</Badge>
+  <Badge tone="warning">Pending</Badge>
+  <Badge tone="danger">Failed</Badge>
+</Example>
+
+## Card
+
+<Example code={`<Card>
+  <CardHeader title="Orders" description="Last 30 days" actions={<Button size="sm">Export</Button>} />
+  <CardBody>Content</CardBody>
+</Card>`}>
+  <Card className="w-full">
+    <CardHeader title="Orders" description="Last 30 days" actions={<Button size="sm">Export</Button>} />
+    <CardBody><p className="text-sm text-fg-muted">Content</p></CardBody>
+  </Card>
+</Example>
+
+<PropsTable title="CardHeader props" rows={[
+  { name: "title", type: "ReactNode", required: true, description: "Card heading." },
+  { name: "description", type: "ReactNode", description: "Muted line under the title." },
+  { name: "actions", type: "ReactNode", description: "Right-aligned controls." },
+]} />
+
+## Stat
+
+<Example code={`<Stat label="Revenue" value="$6,858" delta={{ value: "12% vs last week", direction: "up" }} />
+<Stat label="Refunds" value="3" delta={{ value: "2 more", direction: "down" }} />`}>
+  <div className="grid w-full gap-3 sm:grid-cols-2">
+    <Stat label="Revenue" value="$6,858" delta={{ value: "12% vs last week", direction: "up" }} />
+    <Stat label="Refunds" value="3" delta={{ value: "2 more", direction: "down" }} />
+  </div>
+</Example>
+
+## Table
+
+`Table` is a Server Component, so `cell` renderers can live right next to your data fetching.
+
+<Example code={`<Table
+  caption="Orders"
+  rows={orders}
+  rowKey={(o) => o.id}
+  empty={<EmptyState title="No orders" />}
+  columns={[
+    { key: "id", header: "Order", cell: (o) => o.id },
+    { key: "status", header: "Status", cell: (o) => <Badge tone="success">{o.status}</Badge> },
+    { key: "total", header: "Total", align: "right", cell: (o) => money(o.total) },
+  ]}
+/>`}>
+  <Card className="w-full">
+    <Table
+      caption="Example orders"
+      rows={[{ id: "ORD-1006", status: "pending", total: "$1,200.00" }, { id: "ORD-1001", status: "shipped", total: "$1,156.00" }]}
+      rowKey={(o) => o.id}
+      columns={[
+        { key: "id", header: "Order", cell: (o) => o.id },
+        { key: "status", header: "Status", cell: (o) => <Badge tone={o.status === "shipped" ? "success" : "warning"}>{o.status}</Badge> },
+        { key: "total", header: "Total", align: "right", cell: (o) => o.total },
+      ]}
+    />
+  </Card>
+</Example>
+
+<PropsTable rows={[
+  { name: "columns", type: "Column<T>[]", required: true, description: "{ key, header, cell(row), align?: \"left\" | \"right\", className? }" },
+  { name: "rows", type: "T[]", required: true, description: "Data rows." },
+  { name: "rowKey", type: "(row: T) => string", required: true, description: "Stable key per row." },
+  { name: "empty", type: "ReactNode", description: "Rendered instead of the table when rows is empty." },
+  { name: "caption", type: "string", description: "Screen-reader caption." },
+]} />
+
+## Input and Select
+
+<Example code={`<Input label="Customer" placeholder="Northwind Traders" hint="As it appears on the invoice" />
+<Input label="Quantity" type="number" error="Must be at least 1" />
+<Select label="Status" options={[{ value: "paid", label: "Paid" }, { value: "shipped", label: "Shipped" }]} />`}>
+  <div className="grid w-full gap-4 sm:grid-cols-3">
+    <Input label="Customer" placeholder="Northwind Traders" hint="As it appears on the invoice" />
+    <Input label="Quantity" type="number" defaultValue={0} error="Must be at least 1" />
+    <Select label="Status" options={[{ value: "paid", label: "Paid" }, { value: "shipped", label: "Shipped" }]} />
+  </div>
+</Example>
+
+Both take `label` (required), `hint` and `error`, wire up `id`, `aria-invalid` and `aria-describedby` for you,
+forward refs, and accept the native element's props. `Select` also takes `options`.
+
+## Dialog
+
+Built on the native `<dialog>` element, so it comes with focus trapping, Esc to close and a backdrop.
+
+<Example code={`const [open, setOpen] = useState(false);
+
+<Button onClick={() => setOpen(true)}>Open dialog</Button>
+<Dialog open={open} onClose={() => setOpen(false)} title="Cancel order?"
+  footer={<Button variant="danger" onClick={cancel}>Cancel order</Button>}>
+  The customer will be notified.
+</Dialog>`}>
+  <DialogDemo />
+</Example>
+
+## Page scaffolding
+
+<Example code={`<PageHeader title="Orders" description="Every customer order." actions={<Button>New order</Button>} />
+<EmptyState title="No orders yet" description="Orders appear here." action={<Button>Create one</Button>} />`}>
+  <div className="w-full">
+    <PageHeader title="Orders" description="Every customer order." actions={<Button>New order</Button>} />
+    <Card><EmptyState title="No orders yet" description="Orders appear here as soon as they're created." action={<Button>Create one</Button>} /></Card>
+  </div>
+</Example>
+
+`Spinner` <Spinner className="align-middle text-brand" /> is available on its own for inline loading states.
+
+<Callout type="info" title="Need a component that isn't here?">
+Build it in your app with the token utilities first. If a second team needs it, propose it for `@core/ui` and the
+platform team will upstream it.
+</Callout>

@@ -1,3 +1,16 @@
 @import "tailwindcss";
 @import "@core/ui/styles.css";
 @import "@core/shell/styles.css";
+
+/* Dual-theme syntax highlighting from shiki (see components/docs/CodeBlock). */
+.docs-code .shiki,
+.docs-code pre {
+  background: transparent !important;
+  margin: 0;
+}
+.docs-code .shiki span {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .docs-code .shiki span {
+  color: var(--shiki-dark);
+}

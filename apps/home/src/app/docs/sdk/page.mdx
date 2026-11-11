@@ -1,0 +1,141 @@
+import { PropsTable } from "@/components/docs/PropsTable";
+import { Callout } from "@/components/docs/Callout";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "SDK" };
+
+# @core/sdk
+
+Shared runtime context for every app: who the user is, which apps exist, feature flags, a typed API client and
+the cross-app event bus.
+
+<InstallLine packages={["sdk"]} />
+
+| Entry point | Use from | Exports |
+|---|---|---|
+| `@core/sdk` | anywhere (server, client, Node) | `createApiClient`, `ApiError`, `createEventBus`, types |
+| `@core/sdk/client` | Client Components | `PlatformProvider`, hooks, `useQuery` / `useMutation` / `useQueryClient` |
+
+## PlatformProvider
+
+Wrap your root layout once (generated apps already do). It also sets up React Query.
+
+```tsx
+<PlatformProvider user={session.user} appId="orders" apps={apps} flags={{ "orders.bulk-edit": true }}>
+  {children}
+</PlatformProvider>
+```
+
+<PropsTable rows={[
+  { name: "user", type: "PlatformUser", required: true, description: "From requireSession()." },
+  { name: "appId", type: "string", required: true, description: "Your routes.yaml id; also the source of events you emit." },
+  { name: "apps", type: "PlatformApp[]", required: true, description: "From loadAppRegistry()." },
+  { name: "flags", type: "Record<string, boolean>", required: true, description: "Feature flags for this request." },
+  { name: "tenant", type: "string", description: "Tenant id, for multi-tenant deployments." },
+]} />
+
+## Hooks
+
+All from `@core/sdk/client`, usable in any Client Component under the provider.
+
+| Hook | Returns | Example |
+|---|---|---|
+| `useUser()` | `PlatformUser` | `const { name } = useUser()` |
+| `useHasRole(role)` | `boolean` | `useHasRole("orders-manager")` |
+| `useFeatureFlag(flag)` | `boolean` (false if unset) | `useFeatureFlag("orders.bulk-edit")` |
+| `usePlatform()` | `{ user, appId, apps, flags, tenant? }` | `usePlatform().apps` |
+| `usePlatformEvents()` | `{ emit, on }` | see [events](/docs/events) |
+| `usePlatformEvent(type, handler)` | — | subscribes for the component's lifetime |
+| `useQuery` · `useMutation` · `useQueryClient` | React Query | the platform's shared client |
+
+```tsx
+"use client";
+import { useHasRole, useUser } from "@core/sdk/client";
+
+export function Greeting() {
+  const user = useUser();
+  const canEdit = useHasRole("orders-manager");
+  return <p>{user.name}{canEdit ? " (editor)" : ""}</p>;
+}
+```
+
+<Callout type="warning">
+Use the re-exported `useQuery` / `useMutation` from `@core/sdk/client` rather than importing
+`@tanstack/react-query` yourself, so you share the provider's client.
+</Callout>
+
+## createApiClient
+
+A small typed `fetch` wrapper: JSON in and out, a bearer token per request, request-id propagation, and typed errors.
+
+```ts
+// file: web/src/lib/api.ts
+import { getRequestId, requireSession } from "@core/auth";
+import { createApiClient } from "@core/sdk";
+
+export async function getApi() {
+  const [session, requestId] = await Promise.all([requireSession(), getRequestId()]);
+  return createApiClient({
+    baseUrl: process.env.ORDERS_API_URL ?? "http://localhost:4101",
+    getToken: () => session.accessToken,
+    requestId,
+  });
+}
+
+// in a Server Component or Server Action
+const api = await getApi();
+const { orders } = await api.get<{ orders: Order[] }>("/api/orders");
+const created = await api.post<Order>("/api/orders", { customer: "Acme", lines });
+await api.patch<Order>(`/api/orders/${id}/status`, { status: "paid" });
+```
+
+<PropsTable title="ApiClientOptions" rows={[
+  { name: "baseUrl", type: "string", required: true, description: "Your API's in-cluster URL (not the public gateway URL)." },
+  { name: "getToken", type: "() => string | undefined | Promise<…>", description: "Called per request, so refreshed tokens are picked up." },
+  { name: "requestId", type: "string", description: "Sent as x-request-id for end-to-end tracing." },
+  { name: "fetch", type: "typeof fetch", description: "Custom fetch (tests, instrumentation)." },
+]} />
+
+Methods: `get`, `post`, `put`, `patch` (since 0.2.0), `delete`. Each is generic in the response type and takes an
+optional `RequestInit`.
+
+### Errors
+
+Non-2xx responses throw `ApiError` with `status`, the parsed `body` and the `requestId`:
+
+```ts
+import { ApiError } from "@core/sdk";
+
+try {
+  await api.post("/api/orders", input);
+} catch (err) {
+  if (err instanceof ApiError && err.status === 403) return { error: "You can't create orders." };
+  throw err; // lands in your app/error.tsx boundary
+}
+```
+
+## Calling your API from the browser
+
+Client Components never hold tokens. Add a Route Handler in your app (a backend-for-frontend) and call it with
+plain `fetch` or `useQuery`. The session cookie authenticates it.
+
+```ts
+// file: web/src/app/api/summary/route.ts   →   served at /analytics/api/summary
+import { getApi } from "@/lib/api";
+
+export async function GET() {
+  const api = await getApi();
+  return Response.json(await api.get("/api/analytics/summary"));
+}
+```
+
+```tsx
+"use client";
+import { useQuery } from "@core/sdk/client";
+
+// fetch() is not prefixed with basePath: include it yourself.
+const { data } = useQuery({
+  queryKey: ["summary"],
+  queryFn: () => fetch("/analytics/api/summary").then((r) => r.json()),
+});
+```

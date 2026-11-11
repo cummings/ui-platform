@@ -1,6 +1,6 @@
 {
   "name": "@core/auth",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shared Auth0 single sign-on for platform Next.js apps (with a local mock mode)",
   "type": "module",
   "sideEffects": false,

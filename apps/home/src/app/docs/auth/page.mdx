@@ -1,0 +1,113 @@
+import { PropsTable } from "@/components/docs/PropsTable";
+import { Callout } from "@/components/docs/Callout";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Auth" };
+
+# @core/auth
+
+Single sign-on for every platform web app. One Auth0 tenant and application; the Home app hosts
+`/auth/login`, `/auth/callback` and `/auth/logout`; every app reads the same root-path session cookie.
+
+<InstallLine packages={["auth"]} />
+
+## Protect your app: proxy.ts
+
+```ts
+// file: web/src/proxy.ts
+import { createPlatformProxy } from "@core/auth";
+
+export default createPlatformProxy();
+
+export const config = {
+  // "/" is listed explicitly: with a basePath, the bare app root (e.g. /orders) doesn't match the second pattern.
+  matcher: ["/", "/((?!_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+On every request the proxy:
+
+- lets public paths through (`/healthz`, plus any you add),
+- redirects signed-out page requests to `/auth/login?returnTo=<the page>`, and answers requests with
+  `Accept: application/json` with **401** instead,
+- forwards `x-request-id` (assigning one if missing) and `x-platform-path` to your Server Components.
+
+<PropsTable title="createPlatformProxy(options)" rows={[
+  { name: "publicPaths", type: "string[]", default: "[\"/healthz\"]", description: "Paths (relative to your basePath) that don't need a session. Added to the default." },
+  { name: "hostsAuthRoutes", type: "boolean", default: "false", description: "Home app only: serve /auth/*. Team apps leave this off." },
+]} />
+
+<Callout type="warning" title="Keep the matcher literal">
+Next.js reads `config.matcher` statically, so copy it as-is; it can't be imported from a package.
+</Callout>
+
+## Read the session
+
+| Function | Returns | Use |
+|---|---|---|
+| `requireSession()` | `Promise<PlatformSession>` | Pages and layouts. Redirects to sign-in when signed out. |
+| `getSession()` | `Promise<PlatformSession \| null>` | When signed-out is a valid state. |
+| `getRequestId()` | `Promise<string \| undefined>` | Pass to `createApiClient` for tracing. |
+
+```ts
+interface PlatformSession {
+  user: PlatformUser;   // { id, name, email, picture?, roles: string[] }
+  accessToken: string;  // bearer token for YOUR API — server-side only
+  expiresAt: number;    // epoch seconds
+}
+```
+
+```tsx
+// file: web/src/app/page.tsx
+import { requireSession } from "@core/auth";
+
+export default async function Page() {
+  const { user } = await requireSession();
+  return <p>Hello {user.name}</p>;
+}
+```
+
+<Callout type="rule" title="Access tokens never reach the browser">
+Use `session.accessToken` in Server Components, Server Actions and Route Handlers only. Never pass it as a prop to a
+Client Component. Client-side data goes through your own Route Handler (see [SDK → BFF](/docs/sdk#calling-your-api-from-the-browser)).
+</Callout>
+
+## Roles vs scopes
+
+| | Where | Drives | Example |
+|---|---|---|---|
+| **Roles** | `session.user.roles` | What the UI shows | Hide "New order" unless `orders-manager` |
+| **Scopes** | on the access token | What the API allows | `orders:write` required for `POST /api/orders` |
+
+The UI hides things as a courtesy; the API is the enforcement point.
+
+## Local development: mock mode
+
+With `AUTH_MODE=mock` (the default), `/auth/login` shows a persona picker and the session is a signed JWT shaped
+like an Auth0 access token, so your code runs the same paths locally.
+
+| Persona | Roles | Scopes |
+|---|---|---|
+| Alice Admin (`mock\|alice`) | `platform-admin`, `orders-manager` | `orders:read` `orders:write` `analytics:read` |
+| Bob Viewer (`mock\|bob`) | `viewer` | `orders:read` `analytics:read` |
+
+Mock mode refuses to start when `PLATFORM_ENV=production`.
+
+## Environment
+
+Every web app **and** API gets the same values:
+
+| Variable | Required | Description |
+|---|---|---|
+| `AUTH_MODE` | — | `mock` (default) or `auth0` |
+| `AUTH_SECRET` | prod | ≥ 32 chars. Identical everywhere: it signs mock tokens and encrypts the Auth0 session cookie. |
+| `APP_BASE_URL` | prod | Public origin, e.g. `https://platform.company.com` |
+| `AUTH0_DOMAIN` · `AUTH0_CLIENT_ID` · `AUTH0_CLIENT_SECRET` | auth0 | The platform's Auth0 application |
+| `AUTH0_AUDIENCE` | auth0 | API identifier, so access tokens carry your scopes |
+| `AUTH0_ROLES_CLAIM` | — | Claim holding roles (default `https://platform.company.com/roles`) |
+| `PLATFORM_ENV` | prod | Set to `production` to forbid mock mode |
+
+<Callout type="info">
+Auth0 mode is wired (`@auth0/nextjs-auth0` v4) but hasn't yet been validated against the production tenant.
+Talk to the platform team before relying on it.
+</Callout>

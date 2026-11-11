@@ -1,4 +1,7 @@
 {
   "extends": "@core/config/tsconfig/library.json",
+  "compilerOptions": {
+    "paths": { "@core/ui/client": ["./src/client.ts"] }
+  },
   "include": ["src"]
 }

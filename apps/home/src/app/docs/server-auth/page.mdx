@@ -1,0 +1,91 @@
+import { PropsTable } from "@/components/docs/PropsTable";
+import { Callout } from "@/components/docs/Callout";
+import { InstallLine } from "@/components/docs/PackageGrid";
+
+export const metadata = { title: "Backends" };
+
+# @core/server-auth
+
+A Fastify plugin that verifies the same tokens your web app holds: Auth0 access tokens (RS256 against the tenant
+JWKS) or mock-mode tokens (HS256). It reads the same env vars as the web apps.
+
+<InstallLine packages={["server-auth"]} />
+
+## Register it
+
+```ts
+// file: api/src/app.ts
+import Fastify from "fastify";
+import { platformAuth, serverAuthOptionsFromEnv } from "@core/server-auth";
+
+const app = Fastify({ requestIdHeader: "x-request-id" });
+await app.register(platformAuth, serverAuthOptionsFromEnv());
+
+await app.register(
+  async (r) => {
+    r.get("/", { onRequest: app.requireScopes("orders:read") }, async () => ({ orders: store.list() }));
+    r.post("/", { onRequest: app.requireScopes("orders:write"), schema: { body: orderSchema } }, async (req, reply) => {
+      const order = store.create({ ...req.body, createdBy: req.principal!.sub });
+      return reply.code(201).send(order);
+    });
+  },
+  { prefix: "/api/orders" }, // serve under your agreed prefix; the gateway doesn't rewrite
+);
+```
+
+| Decorator | Behaviour |
+|---|---|
+| `app.authenticate` | **401** unless a valid bearer token is present. Sets `req.principal`. |
+| `app.requireScopes(...scopes)` | Authenticates, then **403** with `missingScopes` unless the token has every scope |
+
+<Callout type="rule" title="Use onRequest, not preHandler">
+`onRequest` runs before body parsing and schema validation, so an unauthorised write gets 403 (not 400) and
+unauthenticated bodies are never parsed.
+</Callout>
+
+## req.principal
+
+<PropsTable title="PlatformPrincipal" rows={[
+  { name: "sub", type: "string", description: "User id (Auth0 sub, or mock|alice)." },
+  { name: "name / email", type: "string | undefined", description: "From the token, when present." },
+  { name: "roles", type: "string[]", description: "From the roles claim." },
+  { name: "scopes", type: "string[]", description: "OAuth scope plus Auth0 RBAC permissions, merged." },
+  { name: "claims", type: "JWTPayload", description: "The full verified payload." },
+  { name: "token", type: "string", description: "Raw bearer token, for calling other platform services on the user's behalf." },
+]} />
+
+## Calling another team's API
+
+Forward the user's token and the request id. The other API applies its own authorization:
+
+```ts
+const res = await fetch(`${process.env.ORDERS_API_URL}/api/orders`, {
+  headers: { authorization: `Bearer ${req.principal!.token}`, "x-request-id": req.id },
+});
+```
+
+## Options
+
+| Option | Mode | Description |
+|---|---|---|
+| `{ mode: "mock", secret }` | mock | HS256 with `AUTH_SECRET` |
+| `{ mode: "auth0", domain, audience, rolesClaim? }` | auth0 | RS256, JWKS from `https://<domain>/.well-known/jwks.json` |
+
+`serverAuthOptionsFromEnv()` builds these from `AUTH_MODE`, `AUTH_SECRET`, `AUTH0_DOMAIN`, `AUTH0_AUDIENCE`,
+`AUTH0_ROLES_CLAIM`, and refuses mock mode when `PLATFORM_ENV=production`.
+
+## Testing
+
+```ts
+// file: api/src/app.test.ts
+import { createTestToken } from "@core/server-auth/testing";
+
+const secret = "t".repeat(40);
+const app = await buildApp({ mode: "mock", secret });
+const token = await createTestToken(secret, { sub: "mock|alice", scopes: ["orders:read"] });
+
+const res = await app.inject({ url: "/api/orders", headers: { authorization: `Bearer ${token}` } });
+expect(res.statusCode).toBe(200);
+```
+
+`createTestToken(secret, { sub?, name?, email?, roles?, scopes?, ttlSeconds? })` is available since 0.2.0.

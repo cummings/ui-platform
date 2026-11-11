@@ -9,6 +9,8 @@ export interface NavItem {
   /** Path inside the app (without basePath) — rendered with the app's own Link component. */
   href: string;
   icon?: ReactNode;
+  /** Only highlight on an exact path match (e.g. a section index like "/docs"). */
+  exact?: boolean;
 }
 
 export interface PlatformShellProps {
@@ -20,7 +22,7 @@ export interface PlatformShellProps {
   /** Current in-app pathname, to highlight the active nav item. */
   activePath?: string;
   /** Pass `next/link` so in-app navigation stays client-side. */
-  linkComponent?: ComponentType<{ href: string; className?: string; children: ReactNode }>;
+  linkComponent?: ComponentType<{ href: string; className?: string; "aria-current"?: "page"; children: ReactNode }>;
   children: ReactNode;
 }
 
@@ -50,18 +52,28 @@ export function PlatformShell({ user, apps, appId, nav, activePath, linkComponen
           <UserMenu user={user} />
         </div>
       </header>
-      <div className="flex flex-1">
+      <div className="flex flex-1 flex-col md:flex-row">
         {nav && nav.length > 0 && (
-          <nav aria-label={`${current?.title ?? appId} navigation`} className="hidden w-56 shrink-0 border-r border-border bg-surface px-3 py-4 md:block">
-            <ul className="flex flex-col gap-0.5">
+          <nav
+            aria-label={`${current?.title ?? appId} navigation`}
+            className={cn(
+              "shrink-0 border-border bg-surface",
+              // Phones: a horizontally scrolling row under the top bar. Desktop: a sticky sidebar.
+              "sticky top-14 z-30 overflow-x-auto border-b px-3 py-2",
+              "md:h-[calc(100vh-3.5rem)] md:w-56 md:overflow-y-auto md:border-b-0 md:border-r md:py-4",
+            )}
+          >
+            <ul className="flex gap-1 md:flex-col md:gap-0.5">
               {nav.map((item) => {
-                const active = activePath === item.href || (item.href !== "/" && activePath?.startsWith(item.href));
+                const active =
+                  activePath === item.href || (!item.exact && item.href !== "/" && activePath?.startsWith(`${item.href}/`));
                 return (
-                  <li key={item.href}>
+                  <li key={item.href} className="shrink-0">
                     <Link
                       href={item.href}
+                      aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                        "flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm",
                         active ? "bg-brand-subtle font-medium text-brand" : "text-fg-muted hover:bg-surface-muted hover:text-fg",
                       )}
                     >
@@ -74,7 +86,7 @@ export function PlatformShell({ user, apps, appId, nav, activePath, linkComponen
             </ul>
           </nav>
         )}
-        <main className="min-w-0 flex-1 px-6 py-8">
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
@@ -82,9 +94,9 @@ export function PlatformShell({ user, apps, appId, nav, activePath, linkComponen
   );
 }
 
-function DefaultLink({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
+function DefaultLink({ href, className, children, ...rest }: { href: string; className?: string; "aria-current"?: "page"; children: ReactNode }) {
   return (
-    <a href={href} className={className}>
+    <a href={href} className={className} {...rest}>
       {children}
     </a>
   );

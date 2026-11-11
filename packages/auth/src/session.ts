@@ -33,7 +33,11 @@ export async function requireSession(): Promise<PlatformSession> {
   if (session) return session;
   const h = await headers();
   const returnTo = h.get("x-platform-path") ?? "/";
-  redirect(`${AUTH_ROUTE_PREFIX}/login?returnTo=${encodeURIComponent(returnTo)}`);
+  // Absolute URL: next/navigation would otherwise prefix a relative path with this app's basePath,
+  // but /auth lives on the Home app at the platform root.
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const origin = host ? `${h.get("x-forwarded-proto") ?? "http"}://${host}` : getAuthConfig().appBaseUrl;
+  redirect(`${origin}${AUTH_ROUTE_PREFIX}/login?returnTo=${encodeURIComponent(returnTo)}`);
 }
 
 /** Request id assigned by the gateway (or by the platform proxy), for tracing API calls. */

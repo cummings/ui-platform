@@ -8,6 +8,8 @@ import type { PlatformApp } from "@core/sdk";
  * for running an app on its own.
  */
 export async function loadAppRegistry(): Promise<PlatformApp[]> {
+  // Nothing to fetch while `next build` prerenders: the gateway isn't running then.
+  if (process.env.NEXT_PHASE === "phase-production-build") return [];
   const url = process.env.PLATFORM_REGISTRY_URL ?? "http://gateway/platform/apps.json";
   try {
     const res = await fetch(url, { next: { revalidate: 60 } } as RequestInit);
