@@ -1,7 +1,7 @@
 # Add this entry to platform-gateway/routes.yaml (via PR to the platform team).
 - id: orders
   title: Orders
-  description: TODO one-line description shown in the app launcher
+  description: See platform-gateway/routes.yaml
   team: Team Orders
   icon: "📦"
   basePath: /orders
